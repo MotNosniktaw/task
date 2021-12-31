@@ -17,10 +17,15 @@ var listCmd = &cobra.Command{
 	Short: "Show all outstandings tasks.",
 	Long:  "Display a list of all the outstanding tasks.",
 	Run: func(cmd *cobra.Command, args []string) {
-		tasks := database.GetUncompletedTasks()
+		all, _ := cmd.Flags().GetBool("all")
+		tasks := database.GetTasks()
 
 		for _, t := range tasks {
-			fmt.Printf("%d: %s\n", t.ID, t.Task)
+			if t.Complete {
+				fmt.Printf("%d: %s\n", t.ID, t.Task)
+			} else if all {
+				fmt.Printf("%d: %s - COMPLETED\n", t.ID, t.Task)
+			}
 		}
 	},
 }
@@ -33,6 +38,8 @@ func init() {
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
+
+	listCmd.PersistentFlags().Bool("all", false, "Include completed tasks.")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:

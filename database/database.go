@@ -15,9 +15,11 @@ type Task struct {
 	Complete bool
 }
 
-func GetTasks() {
+func GetTasks() []Task {
 	db := createDBInstance()
 	defer db.Close()
+
+	tasks := []Task{}
 
 	db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("Tasks"))
@@ -25,11 +27,15 @@ func GetTasks() {
 		c := b.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			fmt.Printf("key=%d, value%s\n", btoi(k), v)
+			t := Task{}
+			json.Unmarshal(v, &t)
+			tasks = append(tasks, t)
 		}
 
 		return nil
 	})
+
+	return tasks
 }
 
 func GetUncompletedTasks() []Task {
