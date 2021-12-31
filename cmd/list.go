@@ -5,6 +5,8 @@ Copyright © 2021 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/motnosniktaw/task/database"
 	"github.com/spf13/cobra"
 )
@@ -15,8 +17,11 @@ var listCmd = &cobra.Command{
 	Short: "Show all outstandings tasks.",
 	Long:  "Display a list of all the outstanding tasks.",
 	Run: func(cmd *cobra.Command, args []string) {
-		database.GetUncompletedTasks()
-		// database.GetTasks()
+		tasks := database.GetUncompletedTasks()
+
+		for _, t := range tasks {
+			fmt.Printf("%d: %s\n", t.ID, t.Task)
+		}
 	},
 }
 

@@ -5,6 +5,10 @@ Copyright © 2021 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+	"os"
+	"strconv"
+
 	"github.com/motnosniktaw/task/database"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +19,18 @@ var updateCmd = &cobra.Command{
 	Short: "Sets a task as complete.",
 	Long:  "Updates a task as completed. Provide list index to identify outstanding task.",
 	Run: func(cmd *cobra.Command, args []string) {
-		database.MarkTaskAsCompleted(3)
+		if len(args) == 0 {
+			fmt.Println("Id of completed task must be provided.")
+			os.Exit(1)
+		}
+
+		i, err := strconv.Atoi(args[0])
+		if err != nil {
+			fmt.Println("Invalid task id format.")
+			os.Exit(1)
+		}
+
+		database.MarkTaskAsCompleted(i)
 	},
 }
 

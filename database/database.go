@@ -32,9 +32,11 @@ func GetTasks() {
 	})
 }
 
-func GetUncompletedTasks() {
+func GetUncompletedTasks() []Task {
 	db := createDBInstance()
 	defer db.Close()
+
+	tasks := []Task{}
 
 	db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("Tasks"))
@@ -45,15 +47,15 @@ func GetUncompletedTasks() {
 			t := Task{}
 			json.Unmarshal(v, &t)
 
-			fmt.Println(t.Complete)
-
-			if t.Complete {
-				fmt.Printf("key=%d, value%s\n", btoi(k), v)
+			if !t.Complete {
+				tasks = append(tasks, t)
 			}
 		}
 
 		return nil
 	})
+
+	return tasks
 }
 
 func MarkTaskAsCompleted(id int) {

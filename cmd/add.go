@@ -5,6 +5,9 @@ Copyright © 2021 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/motnosniktaw/task/database"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +18,11 @@ var addCmd = &cobra.Command{
 	Short: "Add a new task to the list.",
 	Long:  "Creates a new entry in the todo list.",
 	Run: func(cmd *cobra.Command, args []string) {
-		database.AddTask("do thing")
+		if len(args) == 0 {
+			fmt.Println("New task required. e.g. task add <NEW TASK DESCRIPTION>")
+			os.Exit(1)
+		}
+		database.AddTask(args[0])
 	},
 }
 
