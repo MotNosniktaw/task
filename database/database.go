@@ -3,8 +3,11 @@ package database
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/boltdb/bolt"
 )
@@ -14,6 +17,8 @@ type Task struct {
 	Task     []byte
 	Complete bool
 }
+
+const fp = "/.task/tasks.db"
 
 func GetTasks() []Task {
 	db := createDBInstance()
@@ -69,7 +74,7 @@ func MarkTaskAsCompleted(id int) {
 	defer db.Close()
 
 	db.Update(func(tx *bolt.Tx) error {
-		b, _ := tx.CreateBucketIfNotExists([]byte("Tasks"))
+		b := tx.Bucket([]byte("Tasks"))
 		c := b.Cursor()
 		_, v := c.Seek(itob(id))
 
@@ -89,14 +94,9 @@ func AddTask(task string) {
 	defer db.Close()
 
 	db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("Tasks"))
-		if err != nil {
-			log.Fatal(err)
-		}
+		b := tx.Bucket([]byte("Tasks"))
 
 		id, _ := b.NextSequence()
-
-		fmt.Println(id)
 
 		t := Task{
 			ID:       int(id),
@@ -111,7 +111,8 @@ func AddTask(task string) {
 }
 
 func createDBInstance() *bolt.DB {
-	db, err := bolt.Open("./tasks.db", 0600, nil)
+	createDbIfDoesNotExist()
+	db, err := bolt.Open(fp, 0600, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -130,4 +131,35 @@ func itob(v int) []byte {
 func btoi(b []byte) int {
 	i := binary.BigEndian.Uint64(b)
 	return int(i)
+}
+
+func createDbIfDoesNotExist() {
+	if _, err := os.Stat(fp); err == nil {
+		return
+	} else if errors.Is(err, os.ErrNotExist) {
+		if err := os.MkdirAll(filepath.Dir(fp), 0770); err != nil {
+			fmt.Println("There was an error creating the local tasks record file.")
+			os.Exit(1)
+		}
+		os.Create(fp)
+
+		db, err := bolt.Open(fp, 0600, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+
+		db.Update(func(tx *bolt.Tx) error {
+			_, err := tx.CreateBucketIfNotExists([]byte("Tasks"))
+			if err != nil {
+				log.Fatal(err)
+			}
+			return nil
+		})
+		return
+	} else {
+		fmt.Println(err)
+		fmt.Println("There was an error creating the local tasks record.")
+		os.Exit(1)
+	}
 }

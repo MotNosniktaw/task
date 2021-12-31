@@ -20,12 +20,19 @@ var listCmd = &cobra.Command{
 		all, _ := cmd.Flags().GetBool("all")
 		tasks := database.GetTasks()
 
+		outstandingTasksCount := 0
+
 		for _, t := range tasks {
-			if t.Complete {
+			if !t.Complete {
 				fmt.Printf("%d: %s\n", t.ID, t.Task)
+				outstandingTasksCount++
 			} else if all {
 				fmt.Printf("%d: %s - COMPLETED\n", t.ID, t.Task)
 			}
+		}
+
+		if outstandingTasksCount == 0 {
+			fmt.Println("\nNo outstanding tasks.")
 		}
 	},
 }
